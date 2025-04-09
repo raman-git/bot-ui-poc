@@ -1,39 +1,122 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import styled from 'styled-components';
+import styled, { ThemeProvider, createGlobalStyle } from 'styled-components';
+import Settings from './Settings';
+
+// Theme definitions
+const lightTheme = {
+  background: '#fff',
+  headerBackground: '#4a6fa5',
+  headerText: '#fff',
+  text: '#333',
+  inputBorder: '#ddd',
+  userBubble: '#4a6fa5',
+  userText: '#fff',
+  botBubble: '#f1f0f0',
+  botText: '#333',
+  botResponseBg: '#f8f9fa',
+  botResponseBorder: '#4a6fa5',
+  timestamp: '#888',
+  buttonBg: '#4a6fa5',
+  buttonHover: '#3d5d8a',
+  buttonDisabled: '#cccccc',
+  tableBorder: '#d1e1f9',
+  tableHeaderBg: '#4a6fa5',
+  tableHeaderText: '#fff',
+  tableRowEven: '#f2f7ff',
+  tableRowHover: '#e6f0ff',
+};
+
+const darkTheme = {
+  background: '#1e2a38',
+  headerBackground: '#2c3e50',
+  headerText: '#f8f9fa',
+  text: '#f8f9fa',
+  inputBorder: '#4a6fa5',
+  userBubble: '#4a6fa5',
+  userText: '#fff',
+  botBubble: '#2c3e50',
+  botText: '#f8f9fa',
+  botResponseBg: '#2c3e50',
+  botResponseBorder: '#4a6fa5',
+  timestamp: '#aaa',
+  buttonBg: '#4a6fa5',
+  buttonHover: '#3d5d8a',
+  buttonDisabled: '#555',
+  tableBorder: '#4a6fa5',
+  tableHeaderBg: '#2c3e50',
+  tableHeaderText: '#f8f9fa',
+  tableRowEven: '#1e2a38',
+  tableRowHover: '#283a50',
+};
+
+// Global style for theme
+const GlobalStyle = createGlobalStyle`
+  body {
+    background-color: ${props => props.theme.background};
+    color: ${props => props.theme.text};
+    transition: all 0.3s ease;
+  }
+`;
 
 // Styled components
 const ChatContainer = styled.div`
   width: 100%;
-max-width: 700px;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  background-color: #fff;
+  background-color: ${props => props.theme.background};
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 800px;
+  transition: all 0.3s ease;
 `;
 
 const ChatHeader = styled.div`
-  background-color: #4a6fa5;
-  color: white;
+  background-color: ${props => props.theme.headerBackground};
+  color: ${props => props.theme.headerText};
   padding: 15px 20px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+`;
+
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const HamburgerIcon = styled.div`
+  width: 24px;
+  height: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-right: 15px;
+  padding: 2px;
+  
+  span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background-color: white;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+  }
 `;
 
 const ChatAvatar = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #2c3e50;
+  background-color: ${props => props.theme.headerBackground};
   display: flex;
   justify-content: center;
   align-items: center;
   margin-right: 15px;
   font-weight: bold;
   font-size: 18px;
+  color: ${props => props.theme.headerText};
 `;
 
 const ChatMessages = styled.div`
@@ -44,6 +127,7 @@ const ChatMessages = styled.div`
   flex-direction: column;
   gap: 15px;
   align-items: stretch;
+  background-color: ${props => props.theme.background};
 `;
 
 const MessageBubble = styled.div`
@@ -56,41 +140,43 @@ const MessageBubble = styled.div`
   
   ${props => props.isUser ? `
     align-self: flex-end;
-    background-color: #4a6fa5;
-    color: white;
+    background-color: ${props.theme.userBubble};
+    color: ${props.theme.userText};
     border-bottom-right-radius: 5px;
   ` : `
     align-self: flex-start;
-    background-color: #f1f0f0;
-    color: #333;
+    background-color: ${props.theme.botBubble};
+    color: ${props.theme.botText};
     border-bottom-left-radius: 5px;
   `}
 `;
 
 const ChatInputContainer = styled.div`
   padding: 15px;
-  border-top: 1px solid #e6e6e6;
+  border-top: 1px solid ${props => props.theme.inputBorder};
   display: flex;
-  background-color: #fff;
+  background-color: ${props => props.theme.background};
 `;
 
 const ChatInput = styled.input`
   flex: 1;
   padding: 12px 15px;
-  border: 1px solid #ddd;
+  border: 1px solid ${props => props.theme.inputBorder};
   border-radius: 25px;
   font-size: 16px;
   outline: none;
   transition: border-color 0.3s;
+  background-color: ${props => props.theme.background};
+  color: ${props => props.theme.text};
   
   &:focus {
-    border-color: #4a6fa5;
+    border-color: ${props => props.theme.buttonBg};
   }
 `;
 
 const SendButton = styled.button`
-  background-color: #4a6fa5;
-  color: white;
+  background-color: ${props => props.theme.buttonBg};
+  color: ${props => props.theme.headerText};
   border: none;
   border-radius: 50%;
   width: 45px;
@@ -103,26 +189,27 @@ const SendButton = styled.button`
   transition: background-color 0.3s;
   
   &:hover {
-    background-color: #3d5d8a;
+    background-color: ${props => props.theme.buttonHover};
   }
   
   &:disabled {
-    background-color: #cccccc;
+    background-color: ${props => props.theme.buttonDisabled};
     cursor: not-allowed;
   }
 `;
 
 const BotResponse = styled.div`
-  background-color: #f8f9fa;
+  background-color: ${props => props.theme.botResponseBg};
   padding: 10px 15px;
   border-radius: 8px;
-  border-left: 3px solid #4a6fa5;
+  border-left: 3px solid ${props => props.theme.botResponseBorder};
   max-width: 100%;
   align-self: flex-start;
+  color: ${props => props.theme.botText};
   
   .timestamp {
     font-size: 12px;
-    color: #888;
+    color: ${props => props.theme.timestamp};
     margin-top: 5px;
     text-align: right;
   }
@@ -139,30 +226,30 @@ const BotResponse = styled.div`
   }
   
   th {
-    background-color: #4a6fa5;
-    color: white;
+    background-color: ${props => props.theme.tableHeaderBg};
+    color: ${props => props.theme.tableHeaderText};
     font-weight: bold;
     text-align: left;
     padding: 12px 15px;
-    border: 1px solid #3d5d8a;
+    border: 1px solid ${props => props.theme.tableBorder};
   }
   
   td {
     padding: 10px 15px;
-    border: 1px solid #d1e1f9;
-    color: #333;
+    border: 1px solid ${props => props.theme.tableBorder};
+    color: ${props => props.theme.botText};
   }
   
   tr:nth-child(even) {
-    background-color: #f2f7ff;
+    background-color: ${props => props.theme.tableRowEven};
   }
   
   tr:hover {
-    background-color: #e6f0ff;
+    background-color: ${props => props.theme.tableRowHover};
   }
   
   tr:last-child td {
-    border-bottom: 2px solid #4a6fa5;
+    border-bottom: 2px solid ${props => props.theme.botResponseBorder};
   }
   
   tr:first-child th:first-child {
@@ -174,10 +261,23 @@ const BotResponse = styled.div`
   }
 `;
 
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: ${props => props.isVisible ? 'block' : 'none'};
+`;
+
 const ChatBot = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -238,60 +338,91 @@ const ChatBot = () => {
     }
   };
 
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
+  const toggleSettings = () => {
+    setIsSettingsOpen(prev => !prev);
+  };
+
+  const closeSettings = () => {
+    setIsSettingsOpen(false);
+  };
+
+  const currentTheme = isDarkMode ? darkTheme : lightTheme;
+
   return (
-    <ChatContainer>
-      <ChatHeader>
-        <h3>ASKAI</h3>
-      </ChatHeader>
-      
-      <ChatMessages>
-        {messages.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#888', marginTop: '30px' }}>
-            Send a message to start chatting!
-          </div>
-        )}
+    <ThemeProvider theme={currentTheme}>
+      <GlobalStyle />
+      <Overlay isVisible={isSettingsOpen} onClick={closeSettings} />
+      <Settings 
+        isOpen={isSettingsOpen} 
+        onClose={closeSettings} 
+        isDarkMode={isDarkMode} 
+        toggleDarkMode={toggleDarkMode} 
+      />
+      <ChatContainer>
+        <ChatHeader>
+          <HeaderLeft>
+            <HamburgerIcon onClick={toggleSettings}>
+              <span></span>
+              <span></span>
+              <span></span>
+            </HamburgerIcon>
+            <h3>ASKAI</h3>
+          </HeaderLeft>
+        </ChatHeader>
         
-        {messages.map(message => (
-          <div key={message.id} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: message.isUser ? 'flex-end' : 'flex-start' }}>
-            {message.isUser ? (
-              <MessageBubble isUser={true}>
-                {message.text}
-              </MessageBubble>
-            ) : message.html ? (
-              <BotResponse dangerouslySetInnerHTML={{ __html: message.html }} />
-            ) : (
-              <MessageBubble isUser={false}>
-                {message.text}
-              </MessageBubble>
-            )}
-          </div>
-        ))}
+        <ChatMessages>
+          {messages.length === 0 && (
+            <div style={{ textAlign: 'center', color: currentTheme.timestamp, marginTop: '30px' }}>
+              Send a message to start chatting!
+            </div>
+          )}
+          
+          {messages.map(message => (
+            <div key={message.id} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: message.isUser ? 'flex-end' : 'flex-start' }}>
+              {message.isUser ? (
+                <MessageBubble isUser={true} theme={currentTheme}>
+                  {message.text}
+                </MessageBubble>
+              ) : message.html ? (
+                <BotResponse dangerouslySetInnerHTML={{ __html: message.html }} />
+              ) : (
+                <MessageBubble isUser={false} theme={currentTheme}>
+                  {message.text}
+                </MessageBubble>
+              )}
+            </div>
+          ))}
+          
+          {isLoading && (
+            <MessageBubble isUser={false} theme={currentTheme}>
+              Thinking...
+            </MessageBubble>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </ChatMessages>
         
-        {isLoading && (
-          <MessageBubble isUser={false}>
-            Thinking...
-          </MessageBubble>
-        )}
-        
-        <div ref={messagesEndRef} />
-      </ChatMessages>
-      
-      <form onSubmit={handleSendMessage}>
-        <ChatInputContainer>
-          <ChatInput
-            type="text"
-            placeholder="Type your message here..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={isLoading}
-            ref={inputRef}
-          />
-          <SendButton type="submit" disabled={isLoading || !input.trim()}>
-            →
-          </SendButton>
-        </ChatInputContainer>
-      </form>
-    </ChatContainer>
+        <form onSubmit={handleSendMessage}>
+          <ChatInputContainer>
+            <ChatInput
+              type="text"
+              placeholder="Type your message here..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={isLoading}
+              ref={inputRef}
+            />
+            <SendButton type="submit" disabled={isLoading || !input.trim()}>
+              →
+            </SendButton>
+          </ChatInputContainer>
+        </form>
+      </ChatContainer>
+    </ThemeProvider>
   );
 };
 
