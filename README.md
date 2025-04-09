@@ -1,6 +1,6 @@
-# Modern Chatbot UI
+# Simple Chatbot UI
 
-A modern chatbot UI built with React that renders HTML responses from a server.
+A simple chatbot UI built with React that renders HTML responses from a server.
 
 ## Project Structure
 
